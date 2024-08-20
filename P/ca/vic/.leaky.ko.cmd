@@ -1,0 +1,1 @@
+cmd_/home/lehr/pocs/my/P/ca/vic/leaky.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000 -z noexecstack   --build-id  -T ./scripts/module-common.lds -o /home/lehr/pocs/my/P/ca/vic/leaky.ko /home/lehr/pocs/my/P/ca/vic/leaky.o /home/lehr/pocs/my/P/ca/vic/leaky.mod.o;  true
