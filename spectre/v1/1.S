@@ -18,7 +18,7 @@ vic:
     mov %si, (%r14)
     xor %rax, %rax
     .rep 10
-    imul %rdi, %rdi
+    imul $1, %rdi
     .endr
     mov %rdi, %rax
     shl $8, %rax

@@ -72,7 +72,8 @@ int main(){
         vic(1, 0xc39d);
         vic(1, 0xc39d);
         vic(1, 0xc39d);
-        // flush(&probe_array[98 * 4096]);
+        // flush(&probe_array[0x61 * 4096]);
+        // flush(&probe_array[0x62 * 4096]);
         // mfence();
         uint8_t a = vic(0, 0x9090);
         // printf("%d\n", a);
