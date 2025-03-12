@@ -4,11 +4,13 @@ CC := gcc
 CFLAGS := -fPIC -O0 -g
 
 
-OBJS := 1.o v1.o
+ATKOBJS := vic.o client.o
+
+all: attacker
 
 
-all: $(OBJS)
-	$(LD) $(OBJS) -O0 -g  -o v1
+attacker: $(ATKOBJS)
+	$(CC) $(ATKOBJS) -O0 -g -no-pie  -o client
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c $<
@@ -17,4 +19,4 @@ all: $(OBJS)
 	$(AS) $(CFLAGS) -c $<
 
 clean:
-	rm -f *.o v1
+	rm -f *.o client

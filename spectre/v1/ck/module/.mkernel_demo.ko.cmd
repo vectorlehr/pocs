@@ -1,0 +1,1 @@
+cmd_/home/lhr/spectre/v1/ck/module/mkernel_demo.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000 -z noexecstack   --build-id  -T ./scripts/module-common.lds -o /home/lhr/spectre/v1/ck/module/mkernel_demo.ko /home/lhr/spectre/v1/ck/module/mkernel_demo.o /home/lhr/spectre/v1/ck/module/mkernel_demo.mod.o;  true

